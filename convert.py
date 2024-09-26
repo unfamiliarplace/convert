@@ -4,8 +4,9 @@ import sys
 from pathlib import Path
 from enum import Enum
 
-from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog
-from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import pyqtSlot, QSize
+from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QWidget, QPushButton, QGridLayout
+from PyQt6.QtGui import QPalette, QColor
 
 from pydub import AudioSegment
 from PIL import Image
@@ -33,6 +34,9 @@ class Processor:
     @staticmethod
     def process_all(path_dir: Path, subp: SubProcessor) -> None:
 
+        if not path_dir:
+            return
+
         paths = []
         for ext in subp.exts():
             paths.extend(path_dir.glob(f'*.{ext}'))
@@ -46,6 +50,9 @@ class Processor:
 
     @staticmethod
     def process_one(path: Path, subp: SubProcessor) -> None:
+
+        if not path:
+            return
 
         # Read
         subp.set_up_one()
@@ -83,7 +90,6 @@ class SubProcessor:
     def write(data: object, path: Path) -> None:
         raise NotImplementedError
 
-
 class AudioProcessor(SubProcessor):
 
     @staticmethod
@@ -98,7 +104,7 @@ class AudioProcessor(SubProcessor):
     def write(data: AudioSegment, path: Path) -> None:
         data.export(path, format=AUDIO_OUT_EXT, bitrate=AUDIO_OUT_BITRATE)
 
-class ImageProcessor:
+class ImageProcessor(SubProcessor):
 
     @staticmethod
     def set_up_all() -> None:
@@ -122,53 +128,83 @@ class ImageProcessor:
             )
 
 class Main(QMainWindow):
-    mode: str
 
-    def __init__(self):
+    def __init__(self: Main) -> None:
         super().__init__()
-        self.run()
+        self.do_layout()
 
-    def run(self):
+    def do_layout(self: Main) -> None:
+        self.setWindowTitle("Quick Converter")
+        self.setFixedSize(QSize(400, 300))
 
-        # TODO choose mode
-        mode = Mode.AUDIO_PLURAL
+        b_i_s = QPushButton("Single image")
+        b_i_p = QPushButton("Multiple images")
+        b_a_s = QPushButton("Single audio")
+        b_a_p = QPushButton("Multiple audios")
+
+        b_i_s.clicked.connect(lambda _: self.do_mode(Mode.IMAGE_SINGLE))
+        b_i_p.clicked.connect(lambda _: self.do_mode(Mode.IMAGE_PLURAL))
+        b_a_s.clicked.connect(lambda _: self.do_mode(Mode.AUDIO_SINGLE))
+        b_a_p.clicked.connect(lambda _: self.do_mode(Mode.AUDIO_PLURAL))
+
+        layout = QGridLayout()
+        layout.addWidget(b_i_s, 0, 0)
+        layout.addWidget(b_i_p, 0, 1)
+        layout.addWidget(b_a_s, 1, 0)
+        layout.addWidget(b_a_p, 1, 1)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+
+        widget.setAutoFillBackground(True)
+        palette = widget.palette()
+        palette.setColor(QPalette.ColorRole.Window, QColor('#224455'))
+        self.setPalette(palette)
+
+        self.setCentralWidget(widget)
+
+    def do_mode(self: Main, mode: Mode) -> None:
 
         match mode:
 
-            case Mode.AUDIO_SINGLE:
-                path = self.ask_filename()
-                Processor.process_one(path, AudioProcessor)
-
-            case Mode.AUDIO_PLURAL:
-                path = self.ask_folder()
-                Processor.process_all(path, AudioProcessor)
-
             case Mode.IMAGE_SINGLE:
-                path = self.ask_filename()
-                Processor.process_one(path, ImageProcessor)
+                path = self.ask_filename('image')
+                if path is not None:
+                    Processor.process_one(path, ImageProcessor)
 
             case Mode.IMAGE_PLURAL:
-                path = self.ask_folder()
-                Processor.process_all(path, ImageProcessor)
+                path = self.ask_folder('images')
+                if path is not None:
+                    Processor.process_all(path, ImageProcessor)
+
+            case Mode.AUDIO_SINGLE:
+                path = self.ask_filename('audio file')
+                if path is not None:
+                    Processor.process_one(path, AudioProcessor)
+
+            case Mode.AUDIO_PLURAL:
+                path = self.ask_folder('audio files')
+                if path is not None:
+                    Processor.process_all(path, AudioProcessor)
 
         sys.exit()
 
     @pyqtSlot()
-    def ask_filename(self) -> Path:
+    def ask_filename(self: QMainWindow, keyword: str) -> Path:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Choose file to convert", ".", "All files (*);;"
+            self, f"Choose {keyword} to convert", ".", "All files (*);;"
         )
 
-        return Path(path)
+        return Path(path) if path else None
 
     @pyqtSlot()
-    def ask_folder(self) -> Path:
+    def ask_folder(self: QMainWindow, keyword: str) -> Path:
         path = QFileDialog.getExistingDirectory(
-            self, "Choose folder of files to convert", ".",
+            self, f"Choose folder of {keyword} to convert", ".",
             options=QFileDialog.Option.DontUseNativeDialog
         )
 
-        return Path(path)
+        return Path(path) if path else None
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
