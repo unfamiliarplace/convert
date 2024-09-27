@@ -12,6 +12,7 @@ from pydub import AudioSegment
 from PIL import Image
 import pillow_heif
 from send2trash import send2trash
+import traceback
 
 AUDIO_IN_EXTS = ('m4a', 'webm', 'mov', 'mp4')
 AUDIO_OUT_EXT = 'mp3'
@@ -37,7 +38,7 @@ QPushButton {
     width: 185px;
     height: 120px;
     border-radius: 6px;
-    margin: 10px;
+    margin: 5px;
     padding: 10px;
     font-size: 14px;
 }
@@ -77,8 +78,6 @@ class Processor:
 
         print(f'Processing {len(paths)} files')
 
-        subp.set_up_all()
-
         for path in paths:
             Processor.process_one(path, subp)
 
@@ -91,7 +90,6 @@ class Processor:
             return
 
         # Read
-        subp.set_up_one()
         data = subp.read(path)
 
         # Write
@@ -104,18 +102,11 @@ class Processor:
 
         except Exception as e:
             print(repr(e))
+            print(traceback.format_exc())
             print(f'Could not export {path}')
             return False
 
 class SubProcessor:
-
-    @staticmethod
-    def set_up_all() -> None:
-        return
-
-    @staticmethod
-    def set_up_one() -> None:
-        return
 
     @staticmethod
     def in_exts() -> tuple[str]:
@@ -154,10 +145,6 @@ class AudioProcessor(SubProcessor):
 class ImageProcessor(SubProcessor):
 
     @staticmethod
-    def set_up_all() -> None:
-        pillow_heif.register_heif_opener()
-
-    @staticmethod
     def in_exts() -> tuple[str]:
         return IMAGE_IN_EXTS
     
@@ -175,13 +162,14 @@ class ImageProcessor(SubProcessor):
                 format = IMAGE_OUT_FORMAT,
                 quality = IMAGE_OUT_QUALITY,
                 icc_profile = IMAGE_OUT_ICC,
-                exif=image.getexif()
+                exif=image.info.get('exif', b"")
             )
 
 class Main(QMainWindow):
 
     def __init__(self: Main) -> None:
         super().__init__()
+        pillow_heif.register_heif_opener()
         self.do_layout()
 
     def do_layout(self: Main) -> None:

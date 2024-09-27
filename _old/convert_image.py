@@ -88,7 +88,7 @@ class Main(QMainWindow):
                 format = FORCE_FORMAT,
                 quality = self.quality,
                 icc_profile = self.icc,
-                exif=self.image.info['exif']
+                exif=self.image.info.get('exif', b"")
             )
             print(f'Exported to {self.fname_new}')
             return True
