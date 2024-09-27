@@ -96,13 +96,14 @@ class Processor:
 
         # Write
         try:
-            path_out = path.with_suffix('').with_suffix(f'.{AUDIO_OUT_EXT}')
+            path_out = path.with_suffix('').with_suffix(f'.{subp.out_ext()}')
             subp.write(data, path_out)
             print(f'Exported {path} to {path_out}')
             send2trash(path)
             return True
 
-        except:
+        except Exception as e:
+            print(repr(e))
             print(f'Could not export {path}')
             return False
 
@@ -117,7 +118,11 @@ class SubProcessor:
         return
 
     @staticmethod
-    def exts() -> tuple[str]:
+    def in_exts() -> tuple[str]:
+        raise NotImplementedError
+    
+    @staticmethod
+    def out_ext() -> str:
         raise NotImplementedError
 
     @staticmethod
@@ -131,8 +136,12 @@ class SubProcessor:
 class AudioProcessor(SubProcessor):
 
     @staticmethod
-    def exts() -> tuple[str]:
+    def in_exts() -> tuple[str]:
         return AUDIO_IN_EXTS
+    
+    @staticmethod
+    def out_ext() -> str:
+        return AUDIO_OUT_EXT
 
     @staticmethod
     def read(path: Path) -> AudioSegment:
@@ -149,20 +158,24 @@ class ImageProcessor(SubProcessor):
         pillow_heif.register_heif_opener()
 
     @staticmethod
-    def exts() -> tuple[str]:
+    def in_exts() -> tuple[str]:
         return IMAGE_IN_EXTS
+    
+    @staticmethod
+    def out_ext() -> str:
+        return IMAGE_OUT_EXT
 
     @staticmethod
     def read(path: Path) -> Image:
         return Image.open(path)
     
     @staticmethod
-    def write(data: Image, path: Path) -> None:
-        data.save(path,
+    def write(image: Image, path: Path) -> None:
+        image.save(path,
                 format = IMAGE_OUT_FORMAT,
                 quality = IMAGE_OUT_QUALITY,
                 icc_profile = IMAGE_OUT_ICC,
-                exif=data.info['exif']
+                exif=image.getexif()
             )
 
 class Main(QMainWindow):
