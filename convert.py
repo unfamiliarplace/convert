@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QWidget, QPu
 from PyQt6.QtGui import QPalette, QColor, QPixmap, QIcon
 
 from pydub import AudioSegment
-from PIL import Image
+from PIL import Image, ImageFile
 import pillow_heif
 from send2trash import send2trash
 import traceback
@@ -18,11 +18,12 @@ AUDIO_IN_EXTS = ('m4a', 'webm', 'mov', 'mp4')
 AUDIO_OUT_EXT = 'mp3'
 AUDIO_OUT_BITRATE = '320k'
 
-IMAGE_IN_EXTS = ('jpg', 'jpeg', 'png', 'gif', 'heic', 'webp')
+IMAGE_IN_EXTS = ('jpeg', 'png', 'gif', 'heic', 'webp', 'bmp', 'tiff')
 IMAGE_OUT_EXT = 'jpg'
 IMAGE_OUT_FORMAT = 'JPEG'
 IMAGE_OUT_QUALITY = 99
-IMAGE_OUT_ICC = 'sRGB'
+IMAGE_OUT_ICC = ''
+IMAGE_OUT_ICC_NAME = 'RGB'
 
 B64_IMAGE_SINGLE = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD///8AAAC/v79AQECfn58QEBDv7+/Pz8/f399gYGAwMDAgICCAgICvr6+Pj49wcHBQUFBiB6aDAAAAAXRSTlMAQObYZgAAANZJREFUSMft1sGOwyAMRdH0GdtASNr5/5+d0SRtF3UCuJuq4m5gc1ggYTGNRt4imaUKu+IgPmWKfDGiGiTQkQM7HdjpwE4Hdjqw04G7XMIT9rhLeTjRHhfDA1LN2Q33ttOAsjpcBiAOF/CXwzGAucex7mvI2uEIN899qgDrvu1xAYCk/+dXYrtbgPt9zJi11RG2lu2E3Oi0YI/24dnmfnBPZFtSi7vipbnBRRjdqk4LrNaayzCTdO5iOGj57DkxXN1F200S6LQgajoWnCZc+djZxWn0Nf0CfDkL02z2ivMAAAAASUVORK5CYII="
 B64_IMAGE_PLURAL = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD///8AAABAQECAgIC/v79gYGAQEBDv7+/f398wMDDPz88gICCPj49QUFCfn5+vr69wcHD4/O7CAAAAAXRSTlMAQObYZgAAASRJREFUSMft1UtuwzAMRdHokaI+/sX732xVx6iRlKZkDYoiyB0KPBpwwtundyl6tVRhQ4Dearuck1MCIKYDuxMH6XSQTgfpdJBOB+l0kGtuNKDlBAY0XCQD7s6OCux0kE4H6XSQ646YqcDLrgwwDmg5DuPy6sBVt6A0vLpQcfuYf3JEGVXnAYT05Mqj4YZ9+E6zd+0uhuyO2h0B3OGmYx20tLsB34W4LTSkVhdHbNFjn7nVzdibHj+sbW7CT4Ste4tTzktIdRczfkd1J9Dimlug520XZ9KbTWf0cf/GBd3R6KOh0gSvumGE3epUV6SX7E9LTnF7TO48w02Itpuz6lIIZJUxaa5ApoxzJ3enu5KHM7Jcsh3rLoaRrQRyUxuEzDje/r4vb+4RcgZWfigAAAAASUVORK5CYII="
@@ -73,7 +74,7 @@ class Processor:
             return
 
         paths = []
-        for ext in subp.exts():
+        for ext in subp.in_exts():
             paths.extend(path_dir.glob(f'*.{ext}'))
 
         print(f'Processing {len(paths)} files')
@@ -90,21 +91,36 @@ class Processor:
             return
 
         # Read
-        data = subp.read(path)
-
-        # Write
         try:
-            path_out = path.with_suffix('').with_suffix(f'.{subp.out_ext()}')
-            subp.write(data, path_out)
-            print(f'Exported {path} to {path_out}')
-            send2trash(path)
-            return True
+            data = subp.read(path)
 
-        except Exception as e:
-            print(repr(e))
-            print(traceback.format_exc())
-            print(f'Could not export {path}')
-            return False
+            # Write
+            try:
+                path_out = path.with_suffix('').with_suffix(f'.{subp.out_ext()}')
+                subp.write(data, path_out)
+                print(f'Exported {path} to {path_out}')
+
+                # Delete
+                try:
+                    send2trash(path)
+                    print(f'Deleted old file {path}')
+
+                # Failed delete
+                except:
+                    print(f'Unable to delete old file {path}')
+
+                return True
+
+            # Failed write
+            except Exception as e:
+                print(repr(e))
+                print(traceback.format_exc())
+                print(f'Could not export {path}')
+                return False
+            
+        # Failed read
+        except:
+            print(f'Could not read {path}')
 
 class SubProcessor:
 
@@ -153,17 +169,18 @@ class ImageProcessor(SubProcessor):
         return IMAGE_OUT_EXT
 
     @staticmethod
-    def read(path: Path) -> Image:
+    def read(path: Path) -> ImageFile.ImageFile:
         return Image.open(path)
     
     @staticmethod
-    def write(image: Image, path: Path) -> None:
-        image.save(path,
-                format = IMAGE_OUT_FORMAT,
-                quality = IMAGE_OUT_QUALITY,
-                icc_profile = IMAGE_OUT_ICC,
-                exif=image.info.get('exif', b"")
-            )
+    def write(image: ImageFile.ImageFile, path: Path) -> None:
+        image.convert(IMAGE_OUT_ICC_NAME).save(
+            path,
+            format = IMAGE_OUT_FORMAT,
+            quality = IMAGE_OUT_QUALITY,
+            icc_profile = IMAGE_OUT_ICC,
+            exif=image.info.get('exif', b"")
+        )
 
 class Main(QMainWindow):
 
