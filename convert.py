@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 from enum import Enum
 
-from PyQt6.QtCore import pyqtSlot, QSize
+from PyQt6.QtCore import pyqtSlot, QSize, QByteArray
 from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QWidget, QPushButton, QGridLayout
-from PyQt6.QtGui import QPalette, QColor
+from PyQt6.QtGui import QPalette, QColor, QPixmap, QIcon
 
 from pydub import AudioSegment
 from PIL import Image
@@ -22,6 +22,17 @@ IMAGE_OUT_EXT = 'jpg'
 IMAGE_OUT_FORMAT = 'JPEG'
 IMAGE_OUT_QUALITY = 99
 IMAGE_OUT_ICC = 'sRGB'
+
+B64_IMAGE_SINGLE = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD///8AAAC/v79AQECfn58QEBDv7+/Pz8/f399gYGAwMDAgICCAgICvr6+Pj49wcHBQUFBiB6aDAAAAAXRSTlMAQObYZgAAANZJREFUSMft1sGOwyAMRdH0GdtASNr5/5+d0SRtF3UCuJuq4m5gc1ggYTGNRt4imaUKu+IgPmWKfDGiGiTQkQM7HdjpwE4Hdjqw04G7XMIT9rhLeTjRHhfDA1LN2Q33ttOAsjpcBiAOF/CXwzGAucex7mvI2uEIN899qgDrvu1xAYCk/+dXYrtbgPt9zJi11RG2lu2E3Oi0YI/24dnmfnBPZFtSi7vipbnBRRjdqk4LrNaayzCTdO5iOGj57DkxXN1F200S6LQgajoWnCZc+djZxWn0Nf0CfDkL02z2ivMAAAAASUVORK5CYII="
+B64_IMAGE_PLURAL = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD///8AAABAQECAgIC/v79gYGAQEBDv7+/f398wMDDPz88gICCPj49QUFCfn5+vr69wcHD4/O7CAAAAAXRSTlMAQObYZgAAASRJREFUSMft1UtuwzAMRdHokaI+/sX732xVx6iRlKZkDYoiyB0KPBpwwtundyl6tVRhQ4Dearuck1MCIKYDuxMH6XSQTgfpdJBOB+l0kGtuNKDlBAY0XCQD7s6OCux0kE4H6XSQ646YqcDLrgwwDmg5DuPy6sBVt6A0vLpQcfuYf3JEGVXnAYT05Mqj4YZ9+E6zd+0uhuyO2h0B3OGmYx20tLsB34W4LTSkVhdHbNFjn7nVzdibHj+sbW7CT4Ste4tTzktIdRczfkd1J9Dimlug520XZ9KbTWf0cf/GBd3R6KOh0gSvumGE3epUV6SX7E9LTnF7TO48w02Itpuz6lIIZJUxaa5ApoxzJ3enu5KHM7Jcsh3rLoaRrQRyUxuEzDje/r4vb+4RcgZWfigAAAAASUVORK5CYII="
+B64_AUDIO_SINGLE = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD///8AAAC/v7+AgIBAQEBgYGDf398QEBDv7+8wMDCvr69wcHBQUFDPz88gICCfn5+Pj49xJSIhAAAAAXRSTlMAQObYZgAAAM9JREFUSMft1U0LwyAMgOFqovG73f//s4MG7A7Wmg1GN3xPuTzgQeMym309D83KBStOt7N9lwOpRuYKalRtx1DuGModQ7ljKHcVyh1DuWMocqhrUeK8rQ4l7sj8m/PwSMbpMuqq4GDYZQZiZz53QeyMRSAFMmeJJ6lDNd19HCUT3nDFSe5nxLzyzGzM8RvaZ9AcjTjU1RGPRo249XDK7g/JD7nwejZAjIN7advZJt9nYE2i39q7Y85dubXtsovQC0/+TQq6X1pOIujll9nNegIZEwxkvjK4YwAAAABJRU5ErkJggg=="
+B64_AUDIO_PLURAL = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD///8AAACAgIBAQEC/v79gYGDf398wMDDv7+/Pz88QEBAgICCfn59wcHBQUFCvr6+Pj49MpIyGAAAAAXRSTlMAQObYZgAAAR1JREFUSMft1stuAjEMhWF87DhXZuD9X7ZSLVoEiZvJomoR/yqLfFJWsU/vXqUcusUfWKnot/kupUidAKjrwDRw0EUHXXTQRQdddNBFBz3mmgM9p3Cg47J40JyfGFxx0EUHXXTQCRfOLA3l5oRZAHVcNmGFm2MihsG+SwYGDjxy8F2dcO3RiSS4Lu18KRQeHVFwnBayDjqmt/s7Lm6SFpxNqFkXmM3ligNuB2AuwIozbsOXK3YUmnH129mXm/KUa/dvOzOfiaYcf7K725OOLrtskQ4761+72nfSQnZUvCJ0XWnw2+jZmQyawrBIPWex0DjHXZF9t6eui7WKV8LV3BNkSRg7vZC5TgHk5LnoO+67XBt76WjhKipunE+/3wcubRGiizSsLgAAAABJRU5ErkJggg=="
+
+# https://stackoverflow.com/a/52298774
+def iconFromB64(b64: bytes):
+    pixmap = QPixmap()
+    pixmap.loadFromData(QByteArray.fromBase64(b64))
+    return QIcon(pixmap)
 
 class Mode(Enum):
     IMAGE_SINGLE = 0
@@ -48,6 +59,8 @@ class Processor:
         for path in paths:
             Processor.process_one(path, subp)
 
+        return True
+
     @staticmethod
     def process_one(path: Path, subp: SubProcessor) -> None:
 
@@ -64,9 +77,11 @@ class Processor:
             subp.write(data, path_out)
             print(f'Exported {path} to {path_out}')
             send2trash(path)
+            return True
 
         except:
             print(f'Could not export {path}')
+            return False
 
 class SubProcessor:
 
@@ -137,10 +152,10 @@ class Main(QMainWindow):
         self.setWindowTitle("Quick Converter")
         self.setFixedSize(QSize(400, 300))
 
-        b_i_s = QPushButton("Single image")
-        b_i_p = QPushButton("Multiple images")
-        b_a_s = QPushButton("Single audio")
-        b_a_p = QPushButton("Multiple audios")
+        b_i_s = QPushButton(iconFromB64(B64_IMAGE_SINGLE), "Single image")
+        b_i_p = QPushButton(iconFromB64(B64_IMAGE_PLURAL), "Multiple images")
+        b_a_s = QPushButton(iconFromB64(B64_AUDIO_SINGLE), "Single audio")
+        b_a_p = QPushButton(iconFromB64(B64_AUDIO_PLURAL), "Multiple audios")
 
         b_i_s.clicked.connect(lambda _: self.do_mode(Mode.IMAGE_SINGLE))
         b_i_p.clicked.connect(lambda _: self.do_mode(Mode.IMAGE_PLURAL))
@@ -170,24 +185,25 @@ class Main(QMainWindow):
             case Mode.IMAGE_SINGLE:
                 path = self.ask_filename('image')
                 if path is not None:
-                    Processor.process_one(path, ImageProcessor)
+                    success = Processor.process_one(path, ImageProcessor)
 
             case Mode.IMAGE_PLURAL:
                 path = self.ask_folder('images')
                 if path is not None:
-                    Processor.process_all(path, ImageProcessor)
+                    success = Processor.process_all(path, ImageProcessor)
 
             case Mode.AUDIO_SINGLE:
                 path = self.ask_filename('audio file')
                 if path is not None:
-                    Processor.process_one(path, AudioProcessor)
+                    success = Processor.process_one(path, AudioProcessor)
 
             case Mode.AUDIO_PLURAL:
                 path = self.ask_folder('audio files')
                 if path is not None:
-                    Processor.process_all(path, AudioProcessor)
+                    success = Processor.process_all(path, AudioProcessor)
 
-        sys.exit()
+        if path and success:
+            sys.exit()
 
     @pyqtSlot()
     def ask_filename(self: QMainWindow, keyword: str) -> Path:
