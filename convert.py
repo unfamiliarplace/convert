@@ -17,7 +17,7 @@ AUDIO_IN_EXTS = ('m4a', 'webm', 'mov', 'mp4')
 AUDIO_OUT_EXT = 'mp3'
 AUDIO_OUT_BITRATE = '320k'
 
-IMAGE_IN_EXTS = ()
+IMAGE_IN_EXTS = ('jpg', 'jpeg', 'png', 'gif', 'heic', 'webp')
 IMAGE_OUT_EXT = 'jpg'
 IMAGE_OUT_FORMAT = 'JPEG'
 IMAGE_OUT_QUALITY = 99
@@ -28,6 +28,7 @@ B64_IMAGE_PLURAL = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD
 B64_AUDIO_SINGLE = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD///8AAAC/v7+AgIBAQEBgYGDf398QEBDv7+8wMDCvr69wcHBQUFDPz88gICCfn5+Pj49xJSIhAAAAAXRSTlMAQObYZgAAAM9JREFUSMft1U0LwyAMgOFqovG73f//s4MG7A7Wmg1GN3xPuTzgQeMym309D83KBStOt7N9lwOpRuYKalRtx1DuGModQ7ljKHcVyh1DuWMocqhrUeK8rQ4l7sj8m/PwSMbpMuqq4GDYZQZiZz53QeyMRSAFMmeJJ6lDNd19HCUT3nDFSe5nxLzyzGzM8RvaZ9AcjTjU1RGPRo249XDK7g/JD7nwejZAjIN7advZJt9nYE2i39q7Y85dubXtsovQC0/+TQq6X1pOIujll9nNegIZEwxkvjK4YwAAAABJRU5ErkJggg=="
 B64_AUDIO_PLURAL = b"iVBORw0KGgoAAAANSUhEUgAAADcAAABACAMAAACJIh8NAAAANlBMVEUAAAD///8AAACAgIBAQEC/v79gYGDf398wMDDv7+/Pz88QEBAgICCfn59wcHBQUFCvr6+Pj49MpIyGAAAAAXRSTlMAQObYZgAAAR1JREFUSMft1stuAjEMhWF87DhXZuD9X7ZSLVoEiZvJomoR/yqLfFJWsU/vXqUcusUfWKnot/kupUidAKjrwDRw0EUHXXTQRQdddNBFBz3mmgM9p3Cg47J40JyfGFxx0EUHXXTQCRfOLA3l5oRZAHVcNmGFm2MihsG+SwYGDjxy8F2dcO3RiSS4Lu18KRQeHVFwnBayDjqmt/s7Lm6SFpxNqFkXmM3ligNuB2AuwIozbsOXK3YUmnH129mXm/KUa/dvOzOfiaYcf7K725OOLrtskQ4761+72nfSQnZUvCJ0XWnw2+jZmQyawrBIPWex0DjHXZF9t6eui7WKV8LV3BNkSRg7vZC5TgHk5LnoO+67XBt76WjhKipunE+/3wcubRGiizSsLgAAAABJRU5ErkJggg=="
 
+SIZE_BUTTON = QSize(27, 32)
 STYLE = """
 QPushButton {
     border: none;
@@ -179,11 +180,10 @@ class Main(QMainWindow):
         b_a_s = QPushButton(iconFromB64(B64_AUDIO_SINGLE), "Single audio")
         b_a_p = QPushButton(iconFromB64(B64_AUDIO_PLURAL), "Multiple audios")
 
-        b_size = QSize(27, 32)
-        b_i_s.setIconSize(b_size)
-        b_i_p.setIconSize(b_size)
-        b_a_s.setIconSize(b_size)
-        b_a_p.setIconSize(b_size)
+        b_i_s.setIconSize(SIZE_BUTTON)
+        b_i_p.setIconSize(SIZE_BUTTON)
+        b_a_s.setIconSize(SIZE_BUTTON)
+        b_a_p.setIconSize(SIZE_BUTTON)
 
         b_i_s.clicked.connect(lambda _: self.do_mode(Mode.IMAGE_SINGLE))
         b_i_p.clicked.connect(lambda _: self.do_mode(Mode.IMAGE_PLURAL))
