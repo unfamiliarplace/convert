@@ -4,8 +4,8 @@ import sys
 from pathlib import Path
 from enum import Enum
 
-from PyQt6.QtCore import pyqtSlot, QSize, QByteArray
-from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QWidget, QPushButton, QGridLayout
+from PyQt6.QtCore import pyqtSlot, QSize, QByteArray, Qt
+from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QWidget, QPushButton, QGridLayout, QCheckBox
 from PyQt6.QtGui import QPalette, QColor, QPixmap, QIcon
 
 from pydub import AudioSegment
@@ -50,6 +50,10 @@ QPushButton:hover {
 
 QPushButton:pressed {
     background-color: #666;
+}
+
+QCheckBox {
+    color: white;
 }
 """
 
@@ -101,13 +105,14 @@ class Processor:
                 print(f'Exported {path} to {path_out}')
 
                 # Delete
-                try:
-                    send2trash(path)
-                    print(f'Deleted old file {path}')
+                if main_gui.cbox_delete.isChecked():
+                    try:
+                        send2trash(path)
+                        print(f'Deleted old file {path}')
 
-                # Failed delete
-                except:
-                    print(f'Unable to delete old file {path}')
+                    # Failed delete
+                    except:
+                        print(f'Unable to delete old file {path}')
 
                 return True
 
@@ -183,9 +188,12 @@ class ImageProcessor(SubProcessor):
         )
 
 class Main(QMainWindow):
+    cbox_delete: QCheckBox
 
     def __init__(self: Main) -> None:
         super().__init__()
+        self.cbox_delete = None
+
         pillow_heif.register_heif_opener()
         self.do_layout()
 
@@ -208,11 +216,15 @@ class Main(QMainWindow):
         b_a_s.clicked.connect(lambda _: self.do_mode(Mode.AUDIO_SINGLE))
         b_a_p.clicked.connect(lambda _: self.do_mode(Mode.AUDIO_PLURAL))
 
+        self.cbox_delete = QCheckBox("D&elete original file(s)")
+        self.cbox_delete.setChecked(True)
+
         layout = QGridLayout()
         layout.addWidget(b_i_s, 0, 0)
         layout.addWidget(b_i_p, 0, 1)
         layout.addWidget(b_a_s, 1, 0)
         layout.addWidget(b_a_p, 1, 1)
+        layout.addWidget(self.cbox_delete, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
         widget = QWidget()
         widget.setLayout(layout)
