@@ -221,8 +221,8 @@ class Main(QMainWindow):
 
         layout = QGridLayout()
         layout.addWidget(b_i_s, 0, 0)
-        layout.addWidget(b_i_p, 0, 1)
-        layout.addWidget(b_a_s, 1, 0)
+        layout.addWidget(b_i_p, 1, 0)
+        layout.addWidget(b_a_s, 0, 1)
         layout.addWidget(b_a_p, 1, 1)
         layout.addWidget(self.cbox_delete, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
